@@ -20,6 +20,8 @@ body {
   background-color: #666;
   border-radius: var(--border-radius);
   padding: 1rem;
+  cursor: pointer;
+  user-select: none;
 }
 .lines {
   position: absolute;
@@ -32,14 +34,15 @@ body {
 }
 .line {
   position: relative;
-  width: 100%;
+  width: calc(100% + 2rem);
   height: 1px;
   background-color: #555;
+  margin-left: -1rem;
 }
 .line::after {
   content: attr(data-time);
   position: absolute;
-  left: calc(100% + 1.5rem);
+  left: calc(100% + 0.5rem);
   font-size: 0.7rem;
   top: -0.5em;
 }
@@ -57,4 +60,6 @@ body {
   width: calc(100% - 1rem);
   height: calc(100% - 1rem);
   font-size: 0.8rem;
+  cursor: text;
+  user-select: text;
 }
