@@ -9,7 +9,9 @@
   </head>
   <body>
     <div class="container">
-      <div class="day"></div>
+      <div class="day">
+        <div class="day-inner"></div>
+      </div>
     </div>
     <script>
       const startHour = 8;
@@ -17,6 +19,7 @@
 
       const hours = endHour - startHour;
       const $day = document.querySelector(".day");
+      const $dayinner = document.querySelector(".day-inner");
       const dayHeight = $day.clientHeight - 32;
       const blockHeight = dayHeight / (hours * 4);
 
@@ -26,9 +29,23 @@
         return $el;
       }
 
+      // Now line
+      const $now = createElement("div", "now");
+      $day.appendChild($now);
+      function updateNow() {
+        const now = new Date();
+        $now.style.top = `${
+          (((now.getHours() - startHour) * 60 + now.getMinutes()) /
+            (hours * 60)) *
+          100
+        }%`;
+      }
+      updateNow();
+      setInterval(updateNow, 1000);
+
+      // Background (hourly) lines
       const $lines = createElement("div", "lines");
       $day.appendChild($lines);
-
       for (let i = 0; i < hours + 1; i++) {
         const $line = createElement("div", "line");
         $line.setAttribute("data-time", `${startHour + i}:00`);
@@ -47,7 +64,7 @@
           1
         }px`;
       }
-      $day.addEventListener("mousedown", function (e) {
+      $dayinner.addEventListener("mousedown", function (e) {
         mousedownstart = e.screenY;
         const $slot = createElement("div", "slot");
         const $content = createElement("div", "content");
@@ -58,21 +75,26 @@
         $slot.addEventListener("mouseup", function (e) {
           e.stopImmediatePropagation();
           e.preventDefault();
-          $activeSlot.setAttribute("contenteditable", true);
-          $activeSlot = null;
+          if ($activeSlot) {
+            $activeSlot.setAttribute("contenteditable", true);
+            $activeSlot = null;
+          }
         });
-        $slot.style.top = `${roundToBlockStart(e.offsetY) + 16}px`;
-        $day.appendChild($slot);
+        $slot.style.top = `${roundToBlockStart(e.offsetY)}px`;
+        $dayinner.appendChild($slot);
         $activeSlot = $slot;
         setActiveSlotHeight(0);
       });
-      $day.addEventListener("mousemove", function (e) {
+      $dayinner.addEventListener("mousemove", function (e) {
         if (!$activeSlot) {
           return;
         }
         setActiveSlotHeight(e.screenY - mousedownstart);
       });
-      $day.addEventListener("mouseup", function (e) {
+      $dayinner.addEventListener("mouseup", function (e) {
+        if (!$activeSlot) {
+          return;
+        }
         setActiveSlotHeight(e.screenY - mousedownstart);
         $activeSlot.setAttribute("contenteditable", true);
         $activeSlot = null;
