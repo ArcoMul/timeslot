@@ -16,11 +16,12 @@
     <script>
       const startHour = 8;
       const endHour = 19;
+      const slots = [];
 
       const hours = endHour - startHour;
       const $day = document.querySelector(".day");
       const $dayinner = document.querySelector(".day-inner");
-      const dayHeight = $day.clientHeight - 32;
+      const dayHeight = $dayinner.clientHeight;
       const blockHeight = dayHeight / (hours * 4);
 
       function createElement(element, className) {
@@ -52,20 +53,11 @@
         $lines.appendChild($line);
       }
 
-      let mousedownstart = 0;
-      let $activeSlot;
+      let mousedownstartScreen = 0;
+      let mousedownstartOffset = 0;
+      let activeSlot;
 
-      function roundToBlockStart(value) {
-        return Math.floor(value / blockHeight) * blockHeight;
-      }
-      function setActiveSlotHeight(height) {
-        $activeSlot.style.height = `${
-          Math.max(blockHeight, Math.ceil(height / blockHeight) * blockHeight) -
-          1
-        }px`;
-      }
-      $dayinner.addEventListener("mousedown", function (e) {
-        mousedownstart = e.screenY;
+      function createSlot({ start, end, draft }) {
         const $slot = createElement("div", "slot");
         const $content = createElement("div", "content");
         $slot.appendChild($content);
@@ -75,29 +67,71 @@
         $slot.addEventListener("mouseup", function (e) {
           e.stopImmediatePropagation();
           e.preventDefault();
-          if ($activeSlot) {
-            $activeSlot.setAttribute("contenteditable", true);
-            $activeSlot = null;
+          if (activeSlot) {
+            activeSlot.$slot.setAttribute("contenteditable", true);
+            activeSlot = null;
           }
         });
-        $slot.style.top = `${roundToBlockStart(e.offsetY)}px`;
         $dayinner.appendChild($slot);
-        $activeSlot = $slot;
-        setActiveSlotHeight(0);
+        const slot = {
+          id: slots.length,
+          draft,
+          $slot,
+        };
+        slots.push(slot);
+        setStart(slot, start);
+        setEnd(slot, end);
+        return slot;
+      }
+      function setStart(slot, hour) {
+        slot.start = hour;
+        slot.$slot.style.top = `${
+          ((slot.start - startHour) * dayHeight) / hours
+        }px`;
+      }
+      function setEnd(slot, hour) {
+        slot.end = hour;
+        slot.$slot.style.height = `${
+          (Math.max(0.25, slot.end - slot.start) / hours) * dayHeight - 1
+        }px`;
+      }
+      function getHour(offset) {
+        return (
+          startHour +
+          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) *
+            (endHour - startHour)
+        );
+      }
+      $dayinner.addEventListener("mousedown", function (e) {
+        mousedownstartScreen = e.screenY;
+        mousedownstartOffset = e.offsetY;
+        const slot = createSlot({
+          start: getHour(e.offsetY),
+          end: getHour(e.offsetY),
+          draft: true,
+        });
+        activeSlot = slot;
       });
       $dayinner.addEventListener("mousemove", function (e) {
-        if (!$activeSlot) {
+        if (!activeSlot) {
           return;
         }
-        setActiveSlotHeight(e.screenY - mousedownstart);
+        setEnd(
+          activeSlot,
+          getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) + 0.2
+        );
       });
       $dayinner.addEventListener("mouseup", function (e) {
-        if (!$activeSlot) {
+        if (!activeSlot) {
           return;
         }
-        setActiveSlotHeight(e.screenY - mousedownstart);
-        $activeSlot.setAttribute("contenteditable", true);
-        $activeSlot = null;
+        setEnd(
+          activeSlot,
+          getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) +
+            0.25
+        );
+        activeSlot.$slot.setAttribute("contenteditable", true);
+        activeSlot = null;
       });
     </script>
   </body>

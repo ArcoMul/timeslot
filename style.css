@@ -33,7 +33,7 @@ body {
 .now {
   position: absolute;
   height: 2px;
-  background-color: red;
+  background-color: #e21313;
   width: 100%;
   left: 0;
 }
@@ -71,7 +71,7 @@ body {
 }
 .slot .content {
   position: absolute;
-  padding: 0.5rem;
+  padding: 0.125rem 0.5rem;
   width: calc(100% - 1rem);
   height: calc(100% - 1rem);
   font-size: 0.8rem;
