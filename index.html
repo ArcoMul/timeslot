@@ -63,8 +63,13 @@
       let activeSlot;
 
       function createSlot({ start, end, draft }) {
-        const $slot = createElement("div", "slot");
+        const $slot = createElement("div", "slot draft");
         const $content = createElement("div", "content");
+        const slot = {
+          id: slots.length,
+          draft,
+          $slot,
+        };
         $slot.appendChild($content);
         $slot.addEventListener("mousedown", function (e) {
           e.stopImmediatePropagation();
@@ -73,16 +78,16 @@
           e.stopImmediatePropagation();
           e.preventDefault();
           if (activeSlot) {
-            activeSlot.$slot.setAttribute("contenteditable", true);
+            undraftSlot(activeSlot);
             activeSlot = null;
           }
         });
+        $slot.addEventListener("blur", function () {
+          if ($slot.innerText.trim().length === 0) {
+            removeSlot(slot);
+          }
+        });
         $dayinner.appendChild($slot);
-        const slot = {
-          id: slots.length,
-          draft,
-          $slot,
-        };
         slots.push(slot);
         setStart(slot, start);
         setEnd(slot, end);
@@ -102,6 +107,15 @@
         slot.$slot.style.height = `calc(${
           (Math.max(0.25, slot.end - slot.start) / hours) * 100
         }% - 1px)`;
+      }
+      function undraftSlot(slot) {
+        slot.$slot.setAttribute("contenteditable", true);
+        slot.$slot.classList.remove("draft");
+        slot.$slot.focus();
+      }
+      function removeSlot(slot) {
+        slot.removed = true;
+        slot.$slot.remove();
       }
       function getHour(offset) {
         return (
@@ -138,7 +152,7 @@
           getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) +
             0.25
         );
-        activeSlot.$slot.setAttribute("contenteditable", true);
+        undraftSlot(activeSlot);
         activeSlot = null;
       });
     </script>

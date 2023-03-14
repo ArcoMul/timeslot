@@ -78,6 +78,9 @@ body {
   cursor: text;
   user-select: text;
 }
+.slot.draft .content {
+  cursor: pointer;
+}
 .slot.short .content {
   padding: 0.125rem 0.5rem;
 }
