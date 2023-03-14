@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="day"></div>
+    </div>
+    <script>
+      const startHour = 8;
+      const endHour = 19;
+
+      const hours = endHour - startHour;
+      const $day = document.querySelector(".day");
+      const dayHeight = $day.clientHeight - 32;
+      const blockHeight = dayHeight / (hours * 4);
+
+      function createElement(element, className) {
+        $el = document.createElement(element);
+        $el.className = className;
+        return $el;
+      }
+
+      const $lines = createElement("div", "lines");
+      $day.appendChild($lines);
+
+      for (let i = 0; i < hours + 1; i++) {
+        const $line = createElement("div", "line");
+        $lines.appendChild($line);
+      }
+
+      let mousedownstart = 0;
+      let $activeSlot;
+
+      function roundToBlock(value) {
+        return Math.round(value / blockHeight) * blockHeight;
+      }
+      function roundToBlockStart(value) {
+        return Math.floor(value / blockHeight) * blockHeight;
+      }
+      function setActiveSlotHeight(height) {
+        $activeSlot.style.height = `${
+          Math.max(blockHeight, roundToBlock(height)) - 2
+        }px`;
+      }
+      $day.addEventListener("mousedown", function (e) {
+        console.log(e.offsetY, blockHeight);
+        mousedownstart = e.screenY;
+        const $slot = createElement("div", "slot");
+        const $content = createElement("div", "content");
+        $slot.appendChild($content);
+        $slot.addEventListener("mousedown", function (e) {
+          e.stopImmediatePropagation();
+        });
+        $slot.addEventListener("mouseup", function (e) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+        });
+        $slot.style.top = `${roundToBlockStart(e.offsetY) + 16}px`;
+        $day.appendChild($slot);
+        $activeSlot = $slot;
+        setActiveSlotHeight(0);
+      });
+      $day.addEventListener("mousemove", function (e) {
+        if (!$activeSlot) {
+          return;
+        }
+        setActiveSlotHeight(e.screenY - mousedownstart);
+      });
+      $day.addEventListener("mouseup", function (e) {
+        setActiveSlotHeight(e.screenY - mousedownstart);
+        $activeSlot.setAttribute("contenteditable", true);
+        $activeSlot = null;
+      });
+    </script>
+  </body>
+</html>

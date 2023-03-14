@@ -1,0 +1,52 @@
+:root {
+  --border-radius: 5px;
+}
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #444;
+}
+.container {
+  width: 300px;
+  height: calc(100vh - 2rem);
+  padding: 1rem;
+}
+.day {
+  position: relative;
+  width: calc(100% - 2rem);
+  height: calc(100% - 2rem);
+  background-color: #666;
+  border-radius: var(--border-radius);
+  padding: 1rem;
+}
+.lines {
+  position: absolute;
+  top: 1rem;
+  width: calc(100% - 2rem);
+  height: calc(100% - 2rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.line {
+  width: 100%;
+  height: 1px;
+  background-color: #555;
+}
+.slot {
+  position: absolute;
+  width: calc(100% - 2rem);
+  background-color: #555;
+  border-radius: var(--border-radius);
+  border: 1px solid #333;
+  z-index: 1;
+}
+.slot .content {
+  position: absolute;
+  padding: 0.5rem;
+  width: calc(100% - 1rem);
+  height: calc(100% - 1rem);
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+}
