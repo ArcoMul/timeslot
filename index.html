@@ -38,15 +38,13 @@
       let mousedownstart = 0;
       let $activeSlot;
 
-      function roundToBlock(value) {
-        return Math.round(value / blockHeight) * blockHeight;
-      }
       function roundToBlockStart(value) {
         return Math.floor(value / blockHeight) * blockHeight;
       }
       function setActiveSlotHeight(height) {
         $activeSlot.style.height = `${
-          Math.max(blockHeight, roundToBlock(height)) - 1
+          Math.max(blockHeight, Math.ceil(height / blockHeight) * blockHeight) -
+          1
         }px`;
       }
       $day.addEventListener("mousedown", function (e) {
