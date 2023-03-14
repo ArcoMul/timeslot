@@ -46,7 +46,7 @@
       }
       function setActiveSlotHeight(height) {
         $activeSlot.style.height = `${
-          Math.max(blockHeight, roundToBlock(height)) - 2
+          Math.max(blockHeight, roundToBlock(height)) - 1
         }px`;
       }
       $day.addEventListener("mousedown", function (e) {
