@@ -31,6 +31,7 @@
 
       for (let i = 0; i < hours + 1; i++) {
         const $line = createElement("div", "line");
+        $line.setAttribute("data-time", `${startHour + i}:00`);
         $lines.appendChild($line);
       }
 
@@ -49,7 +50,6 @@
         }px`;
       }
       $day.addEventListener("mousedown", function (e) {
-        console.log(e.offsetY, blockHeight);
         mousedownstart = e.screenY;
         const $slot = createElement("div", "slot");
         const $content = createElement("div", "content");
@@ -60,6 +60,8 @@
         $slot.addEventListener("mouseup", function (e) {
           e.stopImmediatePropagation();
           e.preventDefault();
+          $activeSlot.setAttribute("contenteditable", true);
+          $activeSlot = null;
         });
         $slot.style.top = `${roundToBlockStart(e.offsetY) + 16}px`;
         $day.appendChild($slot);
