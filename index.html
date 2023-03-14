@@ -19,6 +19,11 @@
       const slots = [];
 
       const hours = endHour - startHour;
+      console.log({
+        startHour,
+        endHour,
+        hours,
+      });
       const $day = document.querySelector(".day");
       const $dayinner = document.querySelector(".day-inner");
       const dayHeight = $dayinner.clientHeight;
@@ -85,21 +90,23 @@
       }
       function setStart(slot, hour) {
         slot.start = hour;
-        slot.$slot.style.top = `${
-          ((slot.start - startHour) * dayHeight) / hours
-        }px`;
+        slot.$slot.style.top = `${((slot.start - startHour) / hours) * 100}%`;
       }
       function setEnd(slot, hour) {
         slot.end = hour;
-        slot.$slot.style.height = `${
-          (Math.max(0.25, slot.end - slot.start) / hours) * dayHeight - 1
-        }px`;
+        if (slot.end - slot.start > 0.25) {
+          slot.$slot.classList.remove("short");
+        } else {
+          slot.$slot.classList.add("short");
+        }
+        slot.$slot.style.height = `calc(${
+          (Math.max(0.25, slot.end - slot.start) / hours) * 100
+        }% - 1px)`;
       }
       function getHour(offset) {
         return (
           startHour +
-          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) *
-            (endHour - startHour)
+          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) * hours
         );
       }
       $dayinner.addEventListener("mousedown", function (e) {
@@ -118,7 +125,8 @@
         }
         setEnd(
           activeSlot,
-          getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) + 0.2
+          getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) +
+            0.25
         );
       });
       $dayinner.addEventListener("mouseup", function (e) {

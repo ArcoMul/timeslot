@@ -71,10 +71,13 @@ body {
 }
 .slot .content {
   position: absolute;
-  padding: 0.125rem 0.5rem;
+  padding: 0.5rem 0.5rem;
   width: calc(100% - 1rem);
   height: calc(100% - 1rem);
   font-size: 0.8rem;
   cursor: text;
   user-select: text;
+}
+.slot.short .content {
+  padding: 0.125rem 0.5rem;
 }
