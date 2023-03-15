@@ -60,6 +60,7 @@
 
       let mousedownstartScreen = 0;
       let mousedownstartOffset = 0;
+      let mousedownstartHour;
       let activeSlot;
 
       function createSlot({ start, end, draft }) {
@@ -72,14 +73,25 @@
           $content,
         };
         $slot.appendChild($content);
+
         $slot.addEventListener("mousedown", function (e) {
           e.stopImmediatePropagation();
+          if (activeSlot) {
+            return;
+          }
+          console.log("slot mousedown!");
+          activeSlot = slot;
+          mousedownstartHour = activeSlot.start;
+          mousedownstartScreen = e.screenY;
+          mousedownstartOffset = e.offsetY;
         });
         $slot.addEventListener("mouseup", function (e) {
           e.stopImmediatePropagation();
           e.preventDefault();
           if (activeSlot) {
-            undraftSlot(activeSlot);
+            if (activeSlot.draft) {
+              undraftSlot(activeSlot);
+            }
             activeSlot = null;
           }
         });
@@ -110,6 +122,7 @@
         }% - 1px)`;
       }
       function undraftSlot(slot) {
+        slot.draft = false;
         slot.$content.setAttribute("contenteditable", true);
         slot.$slot.classList.remove("draft");
         slot.$content.focus();
@@ -138,14 +151,37 @@
         if (!activeSlot) {
           return;
         }
+        if (activeSlot.draft) {
+          console.log("mousemove draft");
+          setEnd(
+            activeSlot,
+            getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) +
+              0.25
+          );
+          return;
+        }
+        console.log("mousemove");
+        const diff = activeSlot.end - activeSlot.start;
+        setStart(
+          activeSlot,
+          mousedownstartHour -
+            startHour +
+            getHour(e.screenY - mousedownstartScreen)
+        );
         setEnd(
           activeSlot,
-          getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) +
-            0.25
+          mousedownstartHour -
+            startHour +
+            getHour(e.screenY - mousedownstartScreen) +
+            diff
         );
       });
       $dayinner.addEventListener("mouseup", function (e) {
         if (!activeSlot) {
+          return;
+        }
+        if (!activeSlot.draft) {
+          activeSlot = null;
           return;
         }
         setEnd(
