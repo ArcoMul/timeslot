@@ -69,6 +69,7 @@
           id: slots.length,
           draft,
           $slot,
+          $content,
         };
         $slot.appendChild($content);
         $slot.addEventListener("mousedown", function (e) {
@@ -109,9 +110,9 @@
         }% - 1px)`;
       }
       function undraftSlot(slot) {
-        slot.$slot.setAttribute("contenteditable", true);
+        slot.$content.setAttribute("contenteditable", true);
         slot.$slot.classList.remove("draft");
-        slot.$slot.focus();
+        slot.$content.focus();
       }
       function removeSlot(slot) {
         slot.removed = true;
