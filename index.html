@@ -63,55 +63,117 @@
       let mousedownstartHour;
       let activeSlot;
 
+      const DRAG_STATE_DOWN = "down";
+      const DRAG_STATE_UP = "up";
+      const DRAG_STATE_MOVE = "move";
+      function onDrag($el, callback) {
+        let mousedownY;
+        let isDown = false;
+        function move(e) {
+          if (!isDown) return;
+          callback(e, DRAG_STATE_MOVE, e.screenY - mousedownY);
+        }
+        function up(e) {
+          isDown = false;
+          callback(e, DRAG_STATE_UP, e.screenY - mousedownY);
+          document.body.removeEventListener("mousemove", move);
+          document.body.removeEventListener("mouseup", up);
+        }
+        $el.addEventListener("mousedown", function (e) {
+          mousedownY = e.screenY;
+          isDown = true;
+          callback(e, DRAG_STATE_DOWN, 0);
+          document.body.addEventListener("mousemove", move);
+          document.body.addEventListener("mouseup", up);
+        });
+      }
+
       function createSlot({ start, end, draft }) {
         const $slot = createElement("div", "slot draft");
         const $content = createElement("div", "content");
+        const $top = createElement("div", "top");
+        const $bottom = createElement("div", "bottom");
+        $slot.appendChild($content);
+        $slot.appendChild($top);
+        $slot.appendChild($bottom);
+
         const slot = {
           id: slots.length,
           draft,
           $slot,
           $content,
         };
-        $slot.appendChild($content);
 
-        $slot.addEventListener("mousedown", function (e) {
+        onDrag($slot, function (e, state, delta) {
           e.stopImmediatePropagation();
-          if (activeSlot) {
+
+          // Down, start dragging
+          if (state === DRAG_STATE_DOWN) {
+            if (activeSlot) {
+              return;
+            }
+            activeSlot = slot;
+            mousedownstartHour = activeSlot.start;
+          }
+
+          // Up, drop dragging
+          if (state === DRAG_STATE_UP) {
+            activeSlot = null;
             return;
           }
-          console.log("slot mousedown!");
-          activeSlot = slot;
-          mousedownstartHour = activeSlot.start;
-          mousedownstartScreen = e.screenY;
-          mousedownstartOffset = e.offsetY;
-        });
-        $slot.addEventListener("mouseup", function (e) {
-          e.stopImmediatePropagation();
-          e.preventDefault();
-          if (activeSlot) {
-            if (activeSlot.draft) {
-              undraftSlot(activeSlot);
-            }
-            activeSlot = null;
+
+          if (!activeSlot) {
+            return;
           }
+
+          // Existing slot, move slot
+          const diff = activeSlot.end - activeSlot.start;
+          setStart(activeSlot, mousedownstartHour - startHour + getHour(delta));
+          setEnd(
+            activeSlot,
+            mousedownstartHour - startHour + getHour(delta) + diff
+          );
         });
-        $slot.addEventListener("blur", function () {
-          if ($slot.innerText.trim().length === 0) {
+
+        $content.addEventListener("blur", function () {
+          if ($content.innerText.trim().length === 0) {
             removeSlot(slot);
           }
         });
+
+        let onDragStart = 0;
+        onDrag($top, function (e, state, delta) {
+          if (slot.draft || state === DRAG_STATE_UP) {
+            return;
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (state === DRAG_STATE_DOWN) {
+            onDragStart = slot.start;
+          }
+          const hourDelta = getHourDelta(delta);
+          setStart(slot, onDragStart + hourDelta);
+        });
+        onDrag($bottom, function (e, state, delta) {
+          if (slot.draft || state === DRAG_STATE_UP) {
+            return;
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (state === DRAG_STATE_DOWN) {
+            onDragStart = slot.end;
+          }
+          const hourDelta = getHourDelta(delta);
+          setEnd(slot, onDragStart + hourDelta);
+        });
+
         $dayinner.appendChild($slot);
         slots.push(slot);
         setStart(slot, start);
         setEnd(slot, end);
         return slot;
       }
-      function setStart(slot, hour) {
-        slot.start = hour;
-        slot.$slot.style.top = `${((slot.start - startHour) / hours) * 100}%`;
-      }
-      function setEnd(slot, hour) {
-        slot.end = hour;
+      function setHeight(slot) {
         if (slot.end - slot.start > 0.25) {
           slot.$slot.classList.remove("short");
         } else {
@@ -120,6 +182,15 @@
         slot.$slot.style.height = `calc(${
           (Math.max(0.25, slot.end - slot.start) / hours) * 100
         }% - 1px)`;
+      }
+      function setStart(slot, hour) {
+        slot.start = hour;
+        slot.$slot.style.top = `${((slot.start - startHour) / hours) * 100}%`;
+        setHeight(slot);
+      }
+      function setEnd(slot, hour) {
+        slot.end = hour;
+        setHeight(slot);
       }
       function undraftSlot(slot) {
         slot.draft = false;
@@ -137,60 +208,43 @@
           ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) * hours
         );
       }
-      $dayinner.addEventListener("mousedown", function (e) {
-        mousedownstartScreen = e.screenY;
-        mousedownstartOffset = e.offsetY;
-        const slot = createSlot({
-          start: getHour(e.offsetY),
-          end: getHour(e.offsetY),
-          draft: true,
-        });
-        activeSlot = slot;
-      });
-      $dayinner.addEventListener("mousemove", function (e) {
+      function getHourDelta(offset) {
+        return (
+          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) * hours
+        );
+      }
+
+      onDrag($dayinner, function (e, state, delta) {
+        // Mouse down, create slot
+        if (state === DRAG_STATE_DOWN) {
+          mousedownstartOffset = e.offsetY;
+          const slot = createSlot({
+            start: getHour(e.offsetY),
+            end: getHour(e.offsetY),
+            draft: true,
+          });
+          activeSlot = slot;
+          return;
+        }
+
+        // Nothing to drag
         if (!activeSlot) {
           return;
         }
-        if (activeSlot.draft) {
-          console.log("mousemove draft");
-          setEnd(
-            activeSlot,
-            getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) +
-              0.25
-          );
-          return;
-        }
-        console.log("mousemove");
-        const diff = activeSlot.end - activeSlot.start;
-        setStart(
-          activeSlot,
-          mousedownstartHour -
-            startHour +
-            getHour(e.screenY - mousedownstartScreen)
-        );
-        setEnd(
-          activeSlot,
-          mousedownstartHour -
-            startHour +
-            getHour(e.screenY - mousedownstartScreen) +
-            diff
-        );
-      });
-      $dayinner.addEventListener("mouseup", function (e) {
-        if (!activeSlot) {
-          return;
-        }
-        if (!activeSlot.draft) {
+
+        // End drag
+        if (state === DRAG_STATE_UP) {
+          setEnd(activeSlot, getHour(mousedownstartOffset + delta) + 0.25);
+          undraftSlot(activeSlot);
           activeSlot = null;
           return;
         }
-        setEnd(
-          activeSlot,
-          getHour(mousedownstartOffset + e.screenY - mousedownstartScreen) +
-            0.25
-        );
-        undraftSlot(activeSlot);
-        activeSlot = null;
+
+        // New slot, make bigger using dragging
+        if (activeSlot.draft) {
+          setEnd(activeSlot, getHour(mousedownstartOffset + delta) + 0.25);
+          return;
+        }
       });
     </script>
   </body>

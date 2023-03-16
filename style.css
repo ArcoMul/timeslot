@@ -95,3 +95,20 @@ body {
 .slot.short .content {
   margin: 0.125rem 0.5rem;
 }
+
+.slot .top {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  left: 0;
+  height: 0.5rem;
+  cursor: n-resize;
+}
+.slot .bottom {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  left: 0;
+  height: 0.5rem;
+  cursor: s-resize;
+}
