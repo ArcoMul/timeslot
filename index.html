@@ -13,10 +13,13 @@
         <div class="day-inner"></div>
       </div>
     </div>
+    <p class="summary"></p>
     <script>
       const startHour = 8;
       const endHour = 19;
-      const slots = [];
+      let state = {
+        slots: [],
+      };
 
       const hours = endHour - startHour;
       console.log({
@@ -29,14 +32,39 @@
       const dayHeight = $dayinner.clientHeight;
       const blockHeight = dayHeight / (hours * 4);
 
-      function createElement(element, className) {
+      const $text = document.querySelector(".summary");
+
+      const $elements = {};
+      function createElement(element, ids, className) {
         $el = document.createElement(element);
+        $el.id = ids.join("-");
         $el.className = className;
+        ids.reduce((els, id) => {
+          if (!els[id]) {
+            els[id] = {
+              $el,
+              $elements: {},
+            };
+          }
+          return els[id].$elements;
+        }, $elements);
         return $el;
+      }
+      function getElement(ids) {
+        let elements = $elements;
+        let result;
+        ids.forEach((id) => {
+          if (id !== ids[ids.length - 1]) {
+            elements = elements[id].$elements;
+          } else {
+            result = elements[id].$el;
+          }
+        });
+        return result;
       }
 
       // Now line
-      const $now = createElement("div", "now");
+      const $now = createElement("div", ["now"], "now");
       $day.appendChild($now);
       function updateNow() {
         const now = new Date();
@@ -50,10 +78,10 @@
       setInterval(updateNow, 1000);
 
       // Background (hourly) lines
-      const $lines = createElement("div", "lines");
+      const $lines = createElement("div", ["lines"], "lines");
       $day.appendChild($lines);
       for (let i = 0; i < hours + 1; i++) {
-        const $line = createElement("div", "line");
+        const $line = createElement("div", ["lines", `line-${i}`], "line");
         $line.setAttribute("data-time", `${startHour + i}:00`);
         $lines.appendChild($line);
       }
@@ -80,6 +108,8 @@
           document.body.removeEventListener("mouseup", up);
         }
         $el.addEventListener("mousedown", function (e) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
           mousedownY = e.screenY;
           isDown = true;
           callback(e, DRAG_STATE_DOWN, 0);
@@ -88,25 +118,84 @@
         });
       }
 
+      function setStart(slot, hour) {
+        const $slot = getElement(["slots", slot.id]);
+        slot.start = hour;
+        $slot.style.top = `${((slot.start - startHour) / hours) * 100}%`;
+        setHeight(slot);
+        setState({
+          slots: state.slots,
+        });
+      }
+      function setEnd(slot, hour) {
+        slot.end = hour;
+        setHeight(slot);
+        setState({ slots: state.slots });
+      }
+      function undraftSlot(slot) {
+        const $slot = getElement(["slots", slot.id]);
+        const $content = getElement(["slots", slot.id, "content"]);
+        slot.draft = false;
+        $content.setAttribute("contenteditable", true);
+        $slot.classList.remove("draft");
+        $content.focus();
+        setState({ slots: state.slots });
+      }
+      function removeSlot(slot) {
+        slot.removed = true;
+        slot.$slot.remove();
+        setState({ slots: state.slots });
+      }
+      function setDescription(slot, description) {
+        slot.description = description;
+        setState({ slots: state.slots });
+      }
+      function getHour(offset) {
+        return (
+          startHour +
+          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) * hours
+        );
+      }
+      function getHourDelta(offset) {
+        return (
+          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) * hours
+        );
+      }
+
+      function setState(_state) {
+        state = _state;
+        // localStorage.setItem('state', JSON.stringify(state))
+        $text.innerHTML = state.slots
+          .filter((s) => !s.draft && s.description)
+          .map((s) => `${s.start}-${s.end} - ${s.description}`)
+          .join("<br />");
+      }
+
       function createSlot({ start, end, draft }) {
-        const $slot = createElement("div", "slot draft");
-        const $content = createElement("div", "content");
-        const $top = createElement("div", "top");
-        const $bottom = createElement("div", "bottom");
+        const slotId = Math.round(Math.random() * 1000000);
+        const $slot = createElement("div", ["slots", slotId], "slot draft");
+        const $content = createElement(
+          "div",
+          ["slots", slotId, "content"],
+          "content"
+        );
+        const $top = createElement("div", ["slots", slotId, "top"], "top");
+        const $bottom = createElement(
+          "div",
+          ["slots", slotId, "bottom"],
+          "bottom"
+        );
         $slot.appendChild($content);
         $slot.appendChild($top);
         $slot.appendChild($bottom);
 
         const slot = {
-          id: slots.length,
+          id: slotId,
+          description: "",
           draft,
-          $slot,
-          $content,
         };
 
         onDrag($slot, function (e, state, delta) {
-          e.stopImmediatePropagation();
-
           // Down, start dragging
           if (state === DRAG_STATE_DOWN) {
             if (activeSlot) {
@@ -140,14 +229,15 @@
             removeSlot(slot);
           }
         });
+        $content.addEventListener("input", function (e) {
+          setDescription(slot, e.target.innerText);
+        });
 
         let onDragStart = 0;
         onDrag($top, function (e, state, delta) {
           if (slot.draft || state === DRAG_STATE_UP) {
             return;
           }
-          e.preventDefault();
-          e.stopImmediatePropagation();
           if (state === DRAG_STATE_DOWN) {
             onDragStart = slot.start;
           }
@@ -168,50 +258,21 @@
         });
 
         $dayinner.appendChild($slot);
-        slots.push(slot);
+        setState({ slots: [...state.slots, slot] });
         setStart(slot, start);
         setEnd(slot, end);
         return slot;
       }
       function setHeight(slot) {
+        const $slot = getElement(["slots", slot.id]);
         if (slot.end - slot.start > 0.25) {
-          slot.$slot.classList.remove("short");
+          $slot.classList.remove("short");
         } else {
-          slot.$slot.classList.add("short");
+          $slot.classList.add("short");
         }
-        slot.$slot.style.height = `calc(${
+        $slot.style.height = `calc(${
           (Math.max(0.25, slot.end - slot.start) / hours) * 100
         }% - 1px)`;
-      }
-      function setStart(slot, hour) {
-        slot.start = hour;
-        slot.$slot.style.top = `${((slot.start - startHour) / hours) * 100}%`;
-        setHeight(slot);
-      }
-      function setEnd(slot, hour) {
-        slot.end = hour;
-        setHeight(slot);
-      }
-      function undraftSlot(slot) {
-        slot.draft = false;
-        slot.$content.setAttribute("contenteditable", true);
-        slot.$slot.classList.remove("draft");
-        slot.$content.focus();
-      }
-      function removeSlot(slot) {
-        slot.removed = true;
-        slot.$slot.remove();
-      }
-      function getHour(offset) {
-        return (
-          startHour +
-          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) * hours
-        );
-      }
-      function getHourDelta(offset) {
-        return (
-          ((Math.floor(offset / blockHeight) * blockHeight) / dayHeight) * hours
-        );
       }
 
       onDrag($dayinner, function (e, state, delta) {

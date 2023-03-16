@@ -8,12 +8,19 @@ body {
   background-color: #212121;
   color: #fff;
   font-family: Arial, Helvetica, sans-serif;
+  display: flex;
 }
 .container {
   width: 300px;
   height: calc(100vh - 2rem);
   padding: 1rem;
+  margin-right: 2rem;
 }
+
+.summary {
+  padding: 1rem;
+}
+
 .day {
   position: relative;
   width: 100%;
