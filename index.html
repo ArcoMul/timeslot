@@ -174,13 +174,37 @@
         );
       }
 
+      function time(value) {
+        const hours = Math.floor(value);
+        const minutes = (value % 1) * 60;
+        return `${(hours.toString().length === 1 ? "0" : "") + hours}:${
+          (minutes.toString().length === 1 ? "0" : "") + minutes
+        }`;
+      }
+
       function setState(_state) {
         state = _state;
-        // localStorage.setItem('state', JSON.stringify(state))
-        $text.innerHTML = state.slots
+        // $text.innerHTML = state.slots
+        //   .filter((s) => !s.draft && s.description)
+        //   .map(
+        //     (s) =>
+        //       `${time(s.start)}-${time(s.end)} (${time(s.end - s.start)}) - ${
+        //         s.description
+        //       }`
+        //   )
+        //   .join("<br />");
+        const m = state.slots
           .filter((s) => !s.draft && s.description)
-          .map((s) => `${s.start}-${s.end} - ${s.description}`)
-          .join("<br />");
+          .reduce((map, slot) => {
+            map[slot.description] =
+              (map[slot.description] || 0) + slot.end - slot.start;
+            return map;
+          }, {});
+        $text.innerHTML = `Total: ${time(
+          Object.values(m).reduce((v, n) => v + n, 0)
+        )}<br /><br />${Object.keys(m)
+          .map((k) => `${k} (${time(m[k])})`)
+          .join("<br />")}`;
         localStorage.setItem("state", JSON.stringify(state));
       }
 
