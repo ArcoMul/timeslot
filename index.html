@@ -74,11 +74,11 @@
       $day.appendChild($now);
       function updateNow() {
         const now = new Date();
-        $now.style.top = `${
+        $now.style.top = `calc(${
           (((now.getHours() - startHour) * 60 + now.getMinutes()) /
             (hours * 60)) *
           100
-        }%`;
+        }% - 1px)`;
       }
       updateNow();
       setInterval(updateNow, 1000);
@@ -154,9 +154,8 @@
         setState({ slots: state.slots });
       }
       function removeSlot(slot) {
-        slot.removed = true;
-        slot.$slot.remove();
-        setState({ slots: state.slots });
+        getElement(["slots", slot.id]).remove();
+        setState({ slots: state.slots.filter((s) => s.id !== slot.id) });
       }
       function setDescription(slot, description) {
         slot.description = description;
