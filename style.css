@@ -21,6 +21,12 @@ body {
   padding: 1rem;
 }
 
+.clear-button {
+  position: fixed;
+  right: 2rem;
+  top: 2rem;
+}
+
 .day {
   position: relative;
   width: 100%;

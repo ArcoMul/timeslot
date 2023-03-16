@@ -14,6 +14,7 @@
       </div>
     </div>
     <p class="summary"></p>
+    <button type="button" class="clear-button">Clear</button>
     <script>
       const startHour = 8;
       const endHour = 19;
@@ -33,6 +34,11 @@
       const blockHeight = dayHeight / (hours * 4);
 
       const $text = document.querySelector(".summary");
+      const $clearButton = document.querySelector(".clear-button");
+      $clearButton.addEventListener("click", function () {
+        localStorage.removeItem("state");
+        window.location.reload();
+      });
 
       const $elements = {};
       function createElement(element, ids, className) {
@@ -91,6 +97,13 @@
       let mousedownstartHour;
       let activeSlot;
 
+      function init() {
+        const storage = localStorage.getItem("state");
+        if (!storage) return;
+        const s = JSON.parse(storage);
+        s.slots.forEach((slot) => createSlot(slot));
+      }
+
       const DRAG_STATE_DOWN = "down";
       const DRAG_STATE_UP = "up";
       const DRAG_STATE_MOVE = "move";
@@ -108,7 +121,6 @@
           document.body.removeEventListener("mouseup", up);
         }
         $el.addEventListener("mousedown", function (e) {
-          e.preventDefault();
           e.stopImmediatePropagation();
           mousedownY = e.screenY;
           isDown = true;
@@ -169,16 +181,21 @@
           .filter((s) => !s.draft && s.description)
           .map((s) => `${s.start}-${s.end} - ${s.description}`)
           .join("<br />");
+        localStorage.setItem("state", JSON.stringify(state));
       }
 
-      function createSlot({ start, end, draft }) {
-        const slotId = Math.round(Math.random() * 1000000);
+      function createSlot({ id, start, end, draft, description }) {
+        const slotId = id || Math.round(Math.random() * 1000000);
         const $slot = createElement("div", ["slots", slotId], "slot draft");
         const $content = createElement(
           "div",
           ["slots", slotId, "content"],
           "content"
         );
+        $content.innerHTML = description || "";
+        if (!draft) {
+          $content.setAttribute("contenteditable", true);
+        }
         const $top = createElement("div", ["slots", slotId, "top"], "top");
         const $bottom = createElement(
           "div",
@@ -191,7 +208,7 @@
 
         const slot = {
           id: slotId,
-          description: "",
+          description,
           draft,
         };
 
@@ -307,6 +324,8 @@
           return;
         }
       });
+
+      init();
     </script>
   </body>
 </html>
