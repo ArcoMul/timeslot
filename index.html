@@ -30,8 +30,8 @@
       });
       const $day = document.querySelector(".day");
       const $dayinner = document.querySelector(".day-inner");
-      const dayHeight = $dayinner.clientHeight;
-      const blockHeight = dayHeight / (hours * 4);
+      let dayHeight = $dayinner.clientHeight;
+      let blockHeight = dayHeight / (hours * 4);
 
       const $text = document.querySelector(".summary");
       const $clearButton = document.querySelector(".clear-button");
@@ -69,6 +69,12 @@
         return result;
       }
 
+      // On window resize update window size depending variables
+      window.addEventListener('resize', function() {
+        dayHeight = $dayinner.clientHeight;
+        blockHeight = dayHeight / (hours * 4);
+      });
+
       // Now line
       const $now = createElement("div", ["now"], "now");
       $dayinner.appendChild($now);
@@ -92,7 +98,6 @@
         $lines.appendChild($line);
       }
 
-      let mousedownstartScreen = 0;
       let mousedownstartOffset = 0;
       let mousedownstartHour;
       let activeSlot;
