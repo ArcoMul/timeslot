@@ -71,7 +71,7 @@
 
       // Now line
       const $now = createElement("div", ["now"], "now");
-      $day.appendChild($now);
+      $dayinner.appendChild($now);
       function updateNow() {
         const now = new Date();
         $now.style.top = `calc(${
@@ -318,6 +318,7 @@
       onDrag($dayinner, function (e, state, delta) {
         // Mouse down, create slot
         if (state === DRAG_STATE_DOWN) {
+          if (e.target != $dayinner) return;
           mousedownstartOffset = e.offsetY;
           const slot = createSlot({
             start: getHour(e.offsetY),
