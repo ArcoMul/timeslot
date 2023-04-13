@@ -200,8 +200,9 @@
             return map;
           }, {});
         $text.innerHTML = `Total: ${time(
-          Object.values(m).reduce((v, n) => v + n, 0)
+          Object.values(m).reduce((total, n) => total + n, 0)
         )}<br /><br />${Object.keys(m)
+          .sort()
           .map((k) => `${k} (${time(m[k])})`)
           .join("<br />")}`;
         localStorage.setItem("state", JSON.stringify(state));
