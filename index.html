@@ -208,7 +208,7 @@
           Object.values(m).reduce((total, n) => total + n, 0)
         )}<br /><br />${Object.keys(m)
           .sort()
-          .map((k) => `${k} (${time(m[k])})`)
+          .map((k) => `<span class="time">${time(m[k])}</span><span>${k}</span>`)
           .join("<br />")}`;
         localStorage.setItem("state", JSON.stringify(state));
       }

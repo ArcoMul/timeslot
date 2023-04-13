@@ -18,7 +18,12 @@ body {
 }
 
 .summary {
-  padding: 1rem;
+  padding: 1rem 2rem;
+  line-height: 1.5;
+}
+.summary .time {
+  min-width: 4rem;
+  display: inline-block;
 }
 
 .clear-button {
